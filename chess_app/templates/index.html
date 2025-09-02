@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ferrari vs Audi Race</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #333;
+    }
+
+    .gameArea {
+      position: relative;
+      width: 400px;
+      height: 600px;
+      margin: 20px auto;
+      background: #111;
+      border: 4px solid #fff;
+      overflow: hidden;
+    }
+
+    /* Road stripes */
+    .line {
+      position: absolute;
+      width: 10px;
+      height: 80px;
+      background: #fff;
+      left: 195px;
+      animation: moveLine 1s linear infinite;
+    }
+
+    @keyframes moveLine {
+      0% { top: -100px; }
+      100% { top: 700px; }
+    }
+
+    /* Ferrari - Player Car */
+    .ferrari {
+      position: absolute;
+      width: 60px;
+      height: 100px;
+      background: red;
+      border-radius: 15px 15px 8px 8px;
+      bottom: 20px;
+      left: 170px;
+      transition: left 0.2s ease;
+    }
+    .ferrari::before {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      top: 10px;
+      left: 10px;
+      background: black;
+      border-radius: 5px;
+    }
+    .ferrari .headlight {
+      position: absolute;
+      width: 10px;
+      height: 15px;
+      background: yellow;
+      border-radius: 3px;
+      top: 0;
+    }
+    .ferrari .headlight.left { left: 5px; }
+    .ferrari .headlight.right { right: 5px; }
+    .ferrari .taillight {
+      position: absolute;
+      width: 10px;
+      height: 15px;
+      background: red;
+      bottom: 0;
+    }
+    .ferrari .taillight.left { left: 5px; }
+    .ferrari .taillight.right { right: 5px; }
+    .ferrari .wheel {
+      position: absolute;
+      width: 12px;
+      height: 20px;
+      background: black;
+      border-radius: 5px;
+    }
+    .ferrari .wheel.front-left { top: 15px; left: -12px; }
+    .ferrari .wheel.front-right { top: 15px; right: -12px; }
+    .ferrari .wheel.back-left { bottom: 15px; left: -12px; }
+    .ferrari .wheel.back-right { bottom: 15px; right: -12px; }
+
+    /* Audi - Enemy Cars */
+    .audi {
+      position: absolute;
+      width: 60px;
+      height: 100px;
+      background: gray;
+      border-radius: 20px 20px 10px 10px;
+      top: -120px;
+    }
+    .audi::before {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      top: 10px;
+      left: 10px;
+      background: black;
+      border-radius: 5px;
+    }
+    .audi .headlight {
+      position: absolute;
+      width: 10px;
+      height: 15px;
+      background: yellow;
+      border-radius: 3px;
+      top: 0;
+    }
+    .audi .headlight.left { left: 5px; }
+    .audi .headlight.right { right: 5px; }
+    .audi .wheel {
+      position: absolute;
+      width: 12px;
+      height: 20px;
+      background: black;
+      border-radius: 5px;
+    }
+    .audi .wheel.front-left { top: 15px; left: -12px; }
+    .audi .wheel.front-right { top: 15px; right: -12px; }
+    .audi .wheel.back-left { bottom: 15px; left: -12px; }
+    .audi .wheel.back-right { bottom: 15px; right: -12px; }
+
+    /* Score */
+    #score {
+      text-align: center;
+      color: white;
+      font-size: 24px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+  <div class="gameArea" id="gameArea">
+    <div class="ferrari" id="ferrari">
+      <div class="headlight left"></div>
+      <div class="headlight right"></div>
+      <div class="taillight left"></div>
+      <div class="taillight right"></div>
+      <div class="wheel front-left"></div>
+      <div class="wheel front-right"></div>
+      <div class="wheel back-left"></div>
+      <div class="wheel back-right"></div>
+    </div>
+    <!-- Road lines -->
+    <div class="line" style="top:-20px"></div>
+    <div class="line" style="top:120px"></div>
+    <div class="line" style="top:260px"></div>
+    <div class="line" style="top:400px"></div>
+    <div class="line" style="top:540px"></div>
+  </div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const ferrari = document.getElementById("ferrari");
+    const scoreDisplay = document.getElementById("score");
+    let score = 0;
+    let gameOver = false;
+
+    let playerX = 170; // starting X
+
+    // Movement
+    document.addEventListener("keydown", (e) => {
+      if (gameOver) return;
+      if (e.key === "ArrowLeft" && playerX > 80) {
+        playerX -= 90;
+        ferrari.style.left = playerX + "px";
+      } else if (e.key === "ArrowRight" && playerX < 260) {
+        playerX += 90;
+        ferrari.style.left = playerX + "px";
+      }
+    });
+
+    // Spawn enemy cars
+    function createAudi() {
+      const audi = document.createElement("div");
+      audi.classList.add("audi");
+      audi.innerHTML = `
+        <div class="headlight left"></div>
+        <div class="headlight right"></div>
+        <div class="wheel front-left"></div>
+        <div class="wheel front-right"></div>
+        <div class="wheel back-left"></div>
+        <div class="wheel back-right"></div>
+      `;
+      audi.style.left = [80, 170, 260][Math.floor(Math.random() * 3)] + "px";
+      gameArea.appendChild(audi);
+
+      let pos = -120;
+      const move = setInterval(() => {
+        if (gameOver) {
+          clearInterval(move);
+          audi.remove();
+          return;
+        }
+        pos += 5;
+        audi.style.top = pos + "px";
+
+        // Collision detection
+        let fRect = ferrari.getBoundingClientRect();
+        let aRect = audi.getBoundingClientRect();
+        if (!(fRect.bottom < aRect.top || fRect.top > aRect.bottom || fRect.right < aRect.left || fRect.left > aRect.right)) {
+          gameOver = true;
+          alert("💥 Crash! Game Over\nFinal Score: " + score);
+          window.location.reload();
+        }
+
+        if (pos > 620) {
+          clearInterval(move);
+          audi.remove();
+          score++;
+          scoreDisplay.innerText = "Score: " + score;
+        }
+      }, 30);
+    }
+
+    setInterval(() => {
+      if (!gameOver) createAudi();
+    }, 2000);
+  </script>
+</body>
+</html>
